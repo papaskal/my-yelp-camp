@@ -3,6 +3,8 @@ const mongoose = require('mongoose')
 const path = require('path')
 const ejsMate = require('ejs-mate')
 const methodOverride = require('method-override')
+const session = require('express-session')
+const flash = require('connect-flash')
 
 const catchAsync = require('./utils/catchAsync')
 const ExpressError = require('./utils/ExpressError')
@@ -37,9 +39,29 @@ app.use(methodOverride('_method'))
 app.use(express.static(path.join(__dirname, 'public')))
 
 
+const sessionCongig = {
+    secret: 'thisshouldbeabettersecret!',
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+        httpOnly: true,
+        expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+        maxAge: 1000 * 60 * 60 * 24 * 7
+    }
+}
+app.use(session(sessionCongig))
+app.use(flash())
+
 app.listen(3000, () => {
     console.log('Serving on port 3000')
 })
+
+app.use((req, res, next) => {
+    res.locals.success = req.flash('success')
+    res.locals.error = req.flash('error')
+    next()
+})
+
 
 app.use('/campgrounds/:id/reviews', reviews)
 app.use('/campgrounds', campgrounds)
